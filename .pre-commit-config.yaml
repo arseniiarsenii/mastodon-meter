@@ -1,0 +1,52 @@
+exclude: ".venv|test*|.git"
+default_stages: [commit]
+fail_fast: false
+
+repos:
+  - repo: local
+    hooks:
+      - id: black-check
+        name: black-check
+        entry: black .
+        language: system
+        pass_filenames: false
+        always_run: true
+
+  - repo: local
+    hooks:
+      - id: mypy-check
+        name: mypy-check
+        entry: mypy .
+        language: system
+        pass_filenames: false
+        always_run: true
+
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: "3.9.2"
+    hooks:
+      - id: flake8
+        name: flake8-check
+        description: "flake8 is a command-line utility for enforcing style consistency across Python projects."
+        entry: flake8 .
+        language: python
+        types: [python]
+        require_serial: true
+        args: ["--config=.flake8"]
+
+#  - repo: local
+#    hooks:
+#      - id: pytest-check
+#        name: pytest-check
+#        entry: make test
+#        language: system
+#        pass_filenames: false
+#        always_run: true
+
+  - repo: https://github.com/myint/eradicate
+    rev: v2.0.0
+    hooks:
+      - id: eradicate
+        language_version: python3.9
+        entry: eradicate .
+        files: '\.py$'
+        args: [ --in-place ]
