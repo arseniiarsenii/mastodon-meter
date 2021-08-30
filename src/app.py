@@ -1,4 +1,5 @@
 import os
+import typing as tp
 
 import uvicorn
 from fastapi import FastAPI
@@ -6,7 +7,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
 from _logging import CONSOLE_LOGGING_CONFIG, FILE_LOGGING_CONFIG
+from mastodon_meter.Account import Account
+from mastodon_meter.Metering import Metering
 from mastodon_meter.Types import ResponsePayload
+from mastodon_meter.database import MongoDbWrapper
 from mastodon_meter.models import (
     AccountRawData,
     AddAccountRequest,
@@ -35,41 +39,132 @@ api.add_middleware(
 @api.post("/api/accounts/add", response_model=AddAccountResponse)
 def add_tracked_account(account_data: AddAccountRequest) -> ResponsePayload:
     """add an account to the list of tracked"""
-    raise NotImplementedError
+    logger.info("Adding account into the list of tracked")
+
+    try:
+        account: Account = Account(
+            username=account_data.username,
+            instance=account_data.instance,
+            id=account_data.instance_id,
+        )
+        MongoDbWrapper().add_tracked_account(account)
+
+        message: str = f"Added account {account.internal_id} to the list of tracked"
+        logger.info(message)
+
+        response: ResponsePayload = {
+            "status": True,
+            "message": message,
+            "account_internal_id": account.internal_id,
+        }
+        return response
+
+    except Exception as e:
+        message = f"An error occurred while adding the account: {e}"
+        logger.error(message)
+        return {"status": False, "message": message}
 
 
 @api.post("/api/accounts/remove", response_model=ResponseBase)
 def remove_tracked_account(account_data: DeleteAccountRequest) -> ResponsePayload:
     """remove an account from the list of tracked"""
-    raise NotImplementedError
+    logger.info(f"Deleting account {account_data.account_internal_id} from the list of tracked")
+
+    try:
+        MongoDbWrapper().delete_tracked_account(account_data.account_internal_id)
+        message: str = f"Removed account {account_data.account_internal_id} from the list of tracked"
+        logger.info(message)
+
+        if account_data.remove_associated_data:
+            logger.info(f"Removing meterings associated with account {account_data.account_internal_id}")
+            meterings: tp.List[Metering] = MongoDbWrapper().get_all_meterings(account_data.account_internal_id)
+            metering_ids: tp.Set[str] = {m.internal_id for m in meterings}
+            MongoDbWrapper().delete_meterings(metering_ids)
+            logger.info(f"Removed all meterings associated with account {account_data.account_internal_id}")
+
+        response: ResponsePayload = {
+            "status": True,
+            "message": message,
+        }
+        return response
+
+    except Exception as e:
+        message = f"An error occurred while removing the account: {e}"
+        logger.error(message)
+        return {"status": False, "message": message}
 
 
 @api.get("/api/accounts/tracked", response_model=TrackedAccountList)
 def get_tracked_accounts() -> ResponsePayload:
     """return the list of tracked accounts"""
-    raise NotImplementedError
+    logger.info("Gathering tracked accounts")
+
+    try:
+        tracked_accounts: tp.Set[Account] = MongoDbWrapper().get_tracked_accounts()
+        response: ResponsePayload = {
+            "status": True,
+            "message": f"Gathered {len(tracked_accounts)} tracked accounts.",
+            "tracked_accounts": [
+                {
+                    "internal_id": account.internal_id,
+                    "username": account.username,
+                    "instance": account.instance,
+                    "instance_id": account.id,
+                    "added_on": str(account.added_on),
+                }
+                for account in tracked_accounts
+            ],
+        }
+        return response
+
+    except Exception as e:
+        message: str = f"An error occurred while gathering tracked accounts: {e}"
+        logger.error(message)
+        return {"status": False, "message": message}
 
 
 @api.get("/api/{account_internal_id}/data", response_model=AccountRawData)
-def get_account_data() -> ResponsePayload:
+def get_account_data(account_internal_id: str) -> ResponsePayload:
     """get raw data for an account"""
-    raise NotImplementedError
+    logger.info(f"Gathering raw data for account {account_internal_id}")
+
+    try:
+        meterings: tp.List[Metering] = MongoDbWrapper().get_all_meterings(account_internal_id)
+        response: ResponsePayload = {
+            "status": True,
+            "message": f"Gathered raw data for account {account_internal_id}",
+            "data": [
+                {
+                    "toot_count": int(m.toot_count),
+                    "subscribers_count": int(m.subscribers_count),
+                    "metering_id": str(m.internal_id),
+                    "timestamp": str(m.timestamp),
+                }
+                for m in meterings
+            ],
+        }
+        return response
+
+    except Exception as e:
+        message: str = f"An error occurred while gathering raw data: {e}"
+        logger.error(message)
+        return {"status": False, "message": message}
 
 
 @api.get("/api/{account_internal_id}/graph/subscribers")
-def get_subscribers_graph(time_boundaries: GraphRequest) -> ResponsePayload:
+def get_subscribers_graph(account_internal_id: str, time_boundaries: GraphRequest) -> ResponsePayload:
     """get subscribers graph for an account"""
     raise NotImplementedError
 
 
 @api.get("/api/{account_internal_id}/graph/toots")
-def get_toots_graph(time_boundaries: GraphRequest) -> ResponsePayload:
+def get_toots_graph(account_internal_id: str, time_boundaries: GraphRequest) -> ResponsePayload:
     """get toots graph for an account"""
     raise NotImplementedError
 
 
 @api.get("/api/{account_internal_id}/graph/common")
-def get_common_graph(time_boundaries: GraphRequest) -> ResponsePayload:
+def get_common_graph(account_internal_id: str, time_boundaries: GraphRequest) -> ResponsePayload:
     """get common (toots and subscribers) graph for an account"""
     raise NotImplementedError
 
