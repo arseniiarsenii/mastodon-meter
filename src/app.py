@@ -36,7 +36,7 @@ api.add_middleware(
 )
 
 
-@api.post("/api/accounts/add", response_model=AddAccountResponse)
+@api.post("/api/accounts/add", response_model=tp.Union[AddAccountResponse, ResponseBase])
 def add_tracked_account(account_data: AddAccountRequest) -> ResponsePayload:
     """add an account to the list of tracked"""
     logger.info("Adding account into the list of tracked")

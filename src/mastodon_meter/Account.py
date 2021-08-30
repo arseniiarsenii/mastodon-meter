@@ -17,3 +17,7 @@ class Account:
     def account_data_link(self) -> str:
         """a link pointing to an account entity (https://docs.joinmastodon.org/entities/account/)"""
         return f"{self.instance}/api/v1/accounts/{self.id}"
+
+    @property
+    def full_address(self) -> str:
+        return f"{self.username}@{self.instance}"
