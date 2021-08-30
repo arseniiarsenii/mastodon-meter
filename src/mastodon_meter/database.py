@@ -26,12 +26,12 @@ class DatabaseWrapper(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_tracked_accounts(self) -> tp.Set[Account]:
+    def get_tracked_accounts(self) -> tp.List[Account]:
         """get the list of all tracked accounts"""
         raise NotImplementedError
 
     @abstractmethod
-    def add_meterings(self, meterings: tp.Set[Metering]) -> None:
+    def add_meterings(self, meterings: tp.List[Metering]) -> None:
         """add the provided metering into the database"""
         raise NotImplementedError
 
@@ -100,13 +100,13 @@ class MongoDbWrapper(metaclass=SingletonMeta):
         collection: Collection = self._tracked_accounts_collection
         collection.delete_one({"internal_id": account_internal_id})
 
-    def get_tracked_accounts(self) -> tp.Set[Account]:
+    def get_tracked_accounts(self) -> tp.List[Account]:
         """get the list of all tracked accounts"""
         collection: Collection = self._tracked_accounts_collection
         tracked_accounts = self._get_all_items_in_collection(collection)
-        return {Account(**data) for data in tracked_accounts}
+        return [Account(**data) for data in tracked_accounts]
 
-    def add_meterings(self, meterings: tp.Set[Metering]) -> None:
+    def add_meterings(self, meterings: tp.List[Metering]) -> None:
         """add the provided metering into the database"""
         collection: Collection = self._meterings_collection
         metering_documents: tp.List[Document] = [asdict(m) for m in meterings]

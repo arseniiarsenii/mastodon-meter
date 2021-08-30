@@ -100,7 +100,7 @@ def get_tracked_accounts() -> ResponsePayload:
     logger.info("Gathering tracked accounts")
 
     try:
-        tracked_accounts: tp.Set[Account] = MongoDbWrapper().get_tracked_accounts()
+        tracked_accounts: tp.List[Account] = MongoDbWrapper().get_tracked_accounts()
         response: ResponsePayload = {
             "status": True,
             "message": f"Gathered {len(tracked_accounts)} tracked accounts.",

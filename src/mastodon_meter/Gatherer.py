@@ -17,13 +17,8 @@ class Gatherer(metaclass=SingletonMeta):
 
     def gather_meterings(self) -> None:
         """do meterings for all the tracked accounts"""
-        tracked_accounts: tp.Set[Account] = self.db_wrapper.get_tracked_accounts()
-        meterings: tp.Set[Metering] = set()
-
-        for account in tracked_accounts:
-            metering: Metering = self._meter(account)
-            meterings.add(metering)
-
+        tracked_accounts: tp.List[Account] = self.db_wrapper.get_tracked_accounts()
+        meterings: tp.List[Metering] = [self._meter(account) for account in tracked_accounts]
         self.db_wrapper.add_meterings(meterings)
 
     @staticmethod
