@@ -6,14 +6,14 @@ from .Account import Account
 from .Metering import Metering
 from .Singleton import SingletonMeta
 from .Types import ResponsePayload
-from .database import DatabaseWrapper, MongoDbWrapper
+from .database import MongoDbWrapper
 
 
 class Gatherer(metaclass=SingletonMeta):
     """Gathers data for all the tracked accounts and stores it in the database"""
 
     def __init__(self) -> None:
-        self.db_wrapper: DatabaseWrapper = MongoDbWrapper()
+        self.db_wrapper: MongoDbWrapper = MongoDbWrapper()
 
     def gather_meterings(self) -> None:
         """do meterings for all the tracked accounts"""
