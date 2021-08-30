@@ -8,6 +8,7 @@ from pymongo import MongoClient
 
 from .Account import Account
 from .Metering import Metering
+from .Singleton import SingletonMeta
 from .Types import Collection, Document
 
 
@@ -45,7 +46,8 @@ class DatabaseWrapper(ABC):
         raise NotImplementedError
 
 
-class MongoDbWrapper(DatabaseWrapper):
+# not using inheritance because ABC and metaclasses don't work well together
+class MongoDbWrapper(metaclass=SingletonMeta):
     """A database wrapper implementation for MongoDB"""
 
     def __init__(self) -> None:
