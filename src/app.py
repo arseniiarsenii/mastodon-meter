@@ -1,3 +1,4 @@
+import asyncio
 import os
 import typing as tp
 
@@ -8,6 +9,7 @@ from loguru import logger
 
 from _logging import CONSOLE_LOGGING_CONFIG, FILE_LOGGING_CONFIG
 from mastodon_meter.Account import Account
+from mastodon_meter.Gatherer import Gatherer
 from mastodon_meter.Metering import Metering
 from mastodon_meter.Types import ResponsePayload
 from mastodon_meter.database import MongoDbWrapper
@@ -171,6 +173,9 @@ def get_common_graph(account_internal_id: str, time_boundaries: GraphRequest) ->
 
 
 if __name__ == "__main__":
+    # gather meterings
+    asyncio.run(Gatherer().gather_meterings())
+
     # start the server
     host: str = os.getenv("SERVER_HOST", default="0.0.0.0")
     port: int = int(os.getenv("SERVER_PORT", default=8080))

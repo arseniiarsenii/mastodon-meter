@@ -1,6 +1,8 @@
 import typing as tp
+from time import time
 
 import httpx
+from loguru import logger
 
 from .Account import Account
 from .Metering import Metering
@@ -15,20 +17,21 @@ class Gatherer(metaclass=SingletonMeta):
     def __init__(self) -> None:
         self.db_wrapper: MongoDbWrapper = MongoDbWrapper()
 
-    def gather_meterings(self) -> None:
-        """do meterings for all the tracked accounts"""
+    async def gather_meterings(self) -> None:
+        """do meterings for all the tracked accounts asynchronously"""
+        t0: float = time()
         tracked_accounts: tp.List[Account] = self.db_wrapper.get_tracked_accounts()
-        meterings: tp.List[Metering] = [self._meter(account) for account in tracked_accounts]
+        logger.info(f"Gathering meterings for {len(tracked_accounts)} accounts")
+        async with httpx.AsyncClient() as client:
+            responses: tp.List[httpx.Response] = [await client.get(acc.account_data_link) for acc in tracked_accounts]
+        response_payloads: tp.List[ResponsePayload] = [response.json() for response in responses]
+        meterings: tp.List[Metering] = [
+            Metering(
+                toot_count=response["statuses_count"],
+                subscribers_count=response["followers_count"],
+                parent_account_internal_id=account.internal_id,
+            )
+            for response, account in zip(response_payloads, tracked_accounts)
+        ]
         self.db_wrapper.add_meterings(meterings)
-
-    @staticmethod
-    def _meter(account: Account) -> Metering:
-        """get data for an account and package it into a Metering object"""
-        response: httpx.Response = httpx.get(account.account_data_link)
-        response_payload: ResponsePayload = response.json()
-        metering: Metering = Metering(
-            toot_count=response_payload["statuses_count"],
-            subscribers_count=response_payload["followers_count"],
-            parent_account_internal_id=account.internal_id,
-        )
-        return metering
+        logger.info(f"Gathered {len(meterings)} meterings for in {round(time()-t0, 3)} seconds.")
