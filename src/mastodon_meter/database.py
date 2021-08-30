@@ -26,3 +26,8 @@ class DatabaseWrapper(ABC):
     def delete_meterings(self, metering_ids: tp.Set[str]) -> None:
         """delete the provided metering from the database"""
         raise NotImplementedError
+
+    @abstractmethod
+    def get_all_meterings(self, account_internal_id: str) -> None:
+        """get all meterings for an account from the database"""
+        raise NotImplementedError
