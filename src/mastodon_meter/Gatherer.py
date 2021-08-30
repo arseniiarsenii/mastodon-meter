@@ -4,11 +4,12 @@ import httpx
 
 from .Account import Account
 from .Metering import Metering
+from .Singleton import SingletonMeta
 from .Types import ResponsePayload
 from .database import DatabaseWrapper, MongoDbWrapper
 
 
-class Gatherer:
+class Gatherer(metaclass=SingletonMeta):
     """Gathers data for all the tracked accounts and stores it in the database"""
 
     def __init__(self) -> None:
