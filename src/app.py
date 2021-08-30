@@ -36,7 +36,7 @@ api.add_middleware(
 )
 
 
-@api.post("/api/accounts/add", response_model=tp.Union[AddAccountResponse, ResponseBase])
+@api.post("/api/accounts/add", response_model=tp.Union[AddAccountResponse, ResponseBase])  # type: ignore
 def add_tracked_account(account_data: AddAccountRequest) -> ResponsePayload:
     """add an account to the list of tracked"""
     logger.info("Adding account into the list of tracked")
@@ -133,6 +133,7 @@ def get_account_data(account_internal_id: str) -> ResponsePayload:
         response: ResponsePayload = {
             "status": True,
             "message": f"Gathered raw data for account {account_internal_id}",
+            "account_internal_id": account_internal_id,
             "data": [
                 {
                     "toot_count": int(m.toot_count),
