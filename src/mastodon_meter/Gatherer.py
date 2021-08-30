@@ -15,10 +15,6 @@ class Gatherer(metaclass=SingletonMeta):
     def __init__(self) -> None:
         self.db_wrapper: DatabaseWrapper = MongoDbWrapper()
 
-    def get_data_for_an_account(self, account_internal_id: str) -> tp.List[Metering]:
-        """get all meterings for an account from the database"""
-        return self.db_wrapper.get_all_meterings(account_internal_id)
-
     def gather_meterings(self) -> None:
         """do meterings for all the tracked accounts"""
         tracked_accounts: tp.Set[Account] = self.db_wrapper.get_tracked_accounts()

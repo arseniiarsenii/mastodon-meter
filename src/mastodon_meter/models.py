@@ -13,6 +13,7 @@ class ResponseBase(BaseModel):
 class AddAccountRequest:
     """a request to add account to the list of tracked"""
 
+    username: str
     instance: str
     instance_id: str
 

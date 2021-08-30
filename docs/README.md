@@ -13,7 +13,8 @@
 ```json
 {
   "instance": "https://mastodon.social",
-  "instance_id": "000000"
+  "instance_id": "000000",
+  "username": "example"
 }
 ```
 
@@ -22,8 +23,8 @@ Success:
 ```json
 {
   "status":  true,
-  "account_internal_id": "1447ab4fd6924e4cb11038bb487a761d",
-  "message": "Description for the operation result"
+  "message": "Description for the operation result",
+  "account_internal_id": "1447ab4fd6924e4cb11038bb487a761d"
 }
 ```
 
@@ -122,7 +123,6 @@ Success:
 {
   "status":  true,
   "message": "Description for the operation result",
-  "account_internal_id": "1447ab4fd6924e4cb11038bb487a761d",
   "data": [
     {
       "toot_count": 100,
