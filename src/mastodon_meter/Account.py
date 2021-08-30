@@ -12,3 +12,8 @@ class Account:
     id: str
     internal_id: str = field(default_factory=lambda: uuid4().hex)
     added_on: datetime = field(default_factory=lambda: datetime.utcnow())
+
+    @property
+    def account_data_link(self) -> str:
+        """a link pointing to an account entity (https://docs.joinmastodon.org/entities/account/)"""
+        return f"{self.instance}/api/v1/accounts/{self.id}"
