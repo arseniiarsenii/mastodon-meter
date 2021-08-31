@@ -53,9 +53,9 @@ class MongoDbWrapper(metaclass=SingletonMeta):
     def __init__(self) -> None:
         """connect to database using credentials"""
         logger.info("Connecting to MongoDB")
-        username: str = str(os.getenv("MONGO_USERNAME"))
-        password: str = str(os.getenv("MONGO_PASSWORD"))
-        cluster_url: str = str(os.getenv("MONGO_CLUSTER"))
+        username: tp.Optional[str] = os.getenv("MONGO_USERNAME")
+        password: tp.Optional[str] = os.getenv("MONGO_PASSWORD")
+        cluster_url: tp.Optional[str] = os.getenv("MONGO_CLUSTER")
         assert all((username, password, cluster_url))
         mongo_client_url: str = (
             f"mongodb+srv://{username}:{password}@{cluster_url}/mastodon-meter?retryWrites=true&w=majority"
