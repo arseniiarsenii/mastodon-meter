@@ -17,13 +17,13 @@ class MongoDbWrapper(metaclass=SingletonMeta):
     def __init__(self) -> None:
         """connect to database using credentials"""
         logger.info("Connecting to MongoDB")
-        username: tp.Optional[str] = os.getenv("MONGO_USERNAME")
-        password: tp.Optional[str] = os.getenv("MONGO_PASSWORD")
-        cluster_url: tp.Optional[str] = os.getenv("MONGO_CLUSTER")
-        assert all((username, password, cluster_url))
-        mongo_client_url: str = (
-            f"mongodb+srv://{username}:{password}@{cluster_url}/mastodon-meter?retryWrites=true&w=majority"
-        )
+        mongo_client_url: tp.Optional[str] = os.getenv("MONGO_CONNECTION_URL")
+
+        if mongo_client_url is None:
+            message = "Cannot establish database connection: $MONGO_CONNECTION_URL environment variable is not set."
+            logger.critical(message)
+            raise IOError(message)
+
         mongo_client: AsyncIOMotorClient = AsyncIOMotorClient(mongo_client_url)
 
         self._database: AsyncIOMotorDatabase = mongo_client["mastodon-meter"]
