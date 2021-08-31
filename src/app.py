@@ -78,9 +78,7 @@ async def remove_tracked_account(account_data: DeleteAccountRequest) -> Response
 
         if account_data.remove_associated_data:
             logger.info(f"Removing meterings associated with account {account_data.account_internal_id}")
-            meterings: tp.List[Metering] = await MongoDbWrapper().get_all_meterings(account_data.account_internal_id)
-            metering_ids: tp.Set[str] = {m.internal_id for m in meterings}
-            await MongoDbWrapper().delete_meterings(metering_ids)
+            await MongoDbWrapper().delete_meterings_for_account(account_data.account_internal_id)
             logger.info(f"Removed all meterings associated with account {account_data.account_internal_id}")
 
         response: ResponsePayload = {
