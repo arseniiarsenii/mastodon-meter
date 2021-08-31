@@ -22,20 +22,18 @@ class Reporter:
         if not meterings:
             return f"No records to display for {account.full_address}"
 
-        last_metering: Metering = meterings[-1]
-        previous_metering: tp.Optional[Metering] = meterings[-2] if len(meterings) > 1 else None
+        last: Metering = meterings[-1]
+        previous: tp.Optional[Metering] = meterings[-2] if len(meterings) > 1 else None
 
-        if previous_metering is not None:
-            subscribers_diff: int = last_metering.subscribers_count - previous_metering.subscribers_count
-            statuses_diff: int = last_metering.toot_count - previous_metering.toot_count
+        if previous is not None:
+            subscribers_diff: int = last.subscribers_count - previous.subscribers_count
+            statuses_diff: int = last.toot_count - previous.toot_count
             report_line: str = (
-                f"{account.full_address}: {last_metering.subscribers_count}{self._progress(subscribers_diff)} "
-                f"subscribers, {last_metering.toot_count}{self._progress(statuses_diff)} statuses"
+                f"{account.full_address}: {last.subscribers_count}{self._progress(subscribers_diff)} subscribers, "
+                f"{last.toot_count}{self._progress(statuses_diff)} statuses"
             )
         else:
-            report_line = (
-                f"{account.full_address}: {last_metering.subscribers_count} subscribers, {last_metering.toot_count} statuses"
-            )
+            report_line = f"{account.full_address}: {last.subscribers_count} subscribers, {last.toot_count} statuses"
 
         return report_line
 
