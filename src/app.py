@@ -157,8 +157,11 @@ async def get_account_data(account_internal_id: str) -> ResponsePayload:
 async def gather_data() -> ResponsePayload:
     """get meterings for all the tracked accounts and save them to the DB"""
     try:
-        await Gatherer().gather_meterings()
-        return {"status": True, "message": "Gathered meterings for all the tracked accounts."}
+        metering_count, execution_time = await Gatherer().gather_meterings()
+        return {
+            "status": True,
+            "message": f"Gathered {metering_count} meterings for the tracked accounts in {execution_time} s.",
+        }
 
     except Exception as e:
         message: str = f"An error occurred while setting up gathering task: {e}"
