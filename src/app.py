@@ -1,4 +1,3 @@
-import asyncio
 import typing as tp
 
 from fastapi import FastAPI
@@ -94,7 +93,7 @@ async def remove_tracked_account(account_data: DeleteAccountRequest) -> Response
         return {"status": False, "message": message}
 
 
-@app.get("/api/accounts/tracked", response_model=TrackedAccountList)
+@app.get("/api/accounts/tracked", response_model=tp.Union[TrackedAccountList, ResponseBase])  # type: ignore
 async def get_tracked_accounts() -> ResponsePayload:
     """return the list of tracked accounts"""
     logger.info("Gathering tracked accounts")
@@ -123,7 +122,7 @@ async def get_tracked_accounts() -> ResponsePayload:
         return {"status": False, "message": message}
 
 
-@app.get("/api/{account_internal_id}/data", response_model=AccountRawData)
+@app.get("/api/{account_internal_id}/data", response_model=tp.Union[ResponseBase, AccountRawData])  # type: ignore
 async def get_account_data(account_internal_id: str) -> ResponsePayload:
     """get raw data for an account"""
     logger.info(f"Gathering raw data for account {account_internal_id}")
