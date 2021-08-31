@@ -32,8 +32,8 @@ class Plotter:
         if title is not None:
             plt.title(title)
 
-        if subtitle is not None:
-            plt.suptitle(subtitle)
+        subtitle_: str = subtitle or f"Generated on {dt.utcnow().strftime('%Y.%m.%d %H:%M')} UTC using Mastodon-meter"
+        plt.suptitle(subtitle_)
 
         if x_label is not None:
             plt.xlabel(x_label)
@@ -52,26 +52,24 @@ class Plotter:
     @logger.catch
     def draw_subscribers_plot(self, meterings: tp.List[Metering], account: Account) -> str:
         """plot subscribers"""
-        x_data: tp.List[str] = [str(m.timestamp) for m in meterings]
+        x_data: tp.List[str] = [m.timestamp.strftime("%d.%m") for m in meterings]
         y_data: tp.List[int] = [int(m.subscribers_count) for m in meterings]
         title: str = f"{account.full_address} subscribers"
-        subtitle: str = f"Generated on {dt.utcnow()} using Mastodon-meter"
         x_label: str = "Time"
         y_label: str = "Subscriber count"
         filename: str = f"{account.internal_id}-subscribers-plot-{int(dt.utcnow().timestamp())}.png"
-        return self.draw_plot((x_data, y_data), filename, title, subtitle, x_label, y_label)
+        return self.draw_plot((x_data, y_data), filename, title=title, x_label=x_label, y_label=y_label)
 
     @logger.catch
     def draw_statuses_plot(self, meterings: tp.List[Metering], account: Account) -> str:
         """plot status count"""
-        x_data: tp.List[str] = [str(m.timestamp) for m in meterings]
+        x_data: tp.List[str] = [m.timestamp.strftime("%d.%m") for m in meterings]
         y_data: tp.List[int] = [int(m.toot_count) for m in meterings]
         title: str = f"{account.full_address} statuses"
-        subtitle: str = f"Generated on {dt.utcnow()} using Mastodon-meter"
         x_label: str = "Time"
         y_label: str = "Statuses count"
         filename: str = f"{account.internal_id}-statuses-plot-{int(dt.utcnow().timestamp())}.png"
-        return self.draw_plot((x_data, y_data), filename, title, subtitle, x_label, y_label)
+        return self.draw_plot((x_data, y_data), filename, title=title, x_label=x_label, y_label=y_label)
 
     @logger.catch
     def draw_common_plot(self, meterings: tp.List[Metering], account: Account) -> str:
