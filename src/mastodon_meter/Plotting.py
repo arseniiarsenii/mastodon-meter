@@ -19,7 +19,7 @@ class Plotter:
     @staticmethod
     @logger.catch
     def draw_plot(
-        data: tp.Tuple[list, list],
+        data: tp.Tuple[tp.List[str], tp.List[int]],
         filename: str,
         title: tp.Optional[str] = None,
         subtitle: tp.Optional[str] = None,
@@ -80,7 +80,7 @@ class Plotter:
         statuses_plot: PIL.Image = PIL.Image.open(self.draw_statuses_plot(meterings, account))
         w1, h1 = subscribers_plot.size
         w2, _ = statuses_plot.size
-        resulting_image: PIL.Image = PIL.Image.new("RGB", (w1+w2, h1))
+        resulting_image: PIL.Image = PIL.Image.new("RGB", (w1 + w2, h1))
         resulting_image.paste(subscribers_plot, (0, 0))
         resulting_image.paste(statuses_plot, (w2, 0))
         filename: str = f"output/{account.internal_id}-common-plot-{int(dt.utcnow().timestamp())}.png"

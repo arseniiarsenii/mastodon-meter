@@ -3,7 +3,7 @@ from datetime import datetime
 from uuid import uuid4
 
 
-@dataclass
+@dataclass(frozen=True)
 class Metering:
     """Stores information gathered in one metering"""
 
