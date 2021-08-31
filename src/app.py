@@ -124,7 +124,7 @@ async def get_tracked_accounts() -> ResponsePayload:
         return {"status": False, "message": message}
 
 
-@app.get("/api/{account_internal_id}/data", response_model=tp.Union[ResponseBase, AccountRawData])  # type: ignore
+@app.get("/api/{account_internal_id}/data", response_model=tp.Union[AccountRawData, ResponseBase])  # type: ignore
 async def get_account_data(account_internal_id: str) -> ResponsePayload:
     """get raw data for an account"""
     logger.info(f"Gathering raw data for account {account_internal_id}")
@@ -158,7 +158,7 @@ async def gather_data() -> ResponsePayload:
     """get meterings for all the tracked accounts and save them to the DB"""
     try:
         await Gatherer().gather_meterings()
-        return {"status": True, "message": f"Gathered meterings for all the tracked accounts."}
+        return {"status": True, "message": "Gathered meterings for all the tracked accounts."}
 
     except Exception as e:
         message: str = f"An error occurred while setting up gathering task: {e}"
