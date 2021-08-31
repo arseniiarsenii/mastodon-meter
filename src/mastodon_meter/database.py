@@ -75,6 +75,13 @@ class MongoDbWrapper(metaclass=SingletonMeta):
         tracked_accounts = await self._get_all_items_in_collection(collection)
         return [Account(**data) for data in tracked_accounts]
 
+    async def get_account_by_internal_id(self, account_internal_id: str) -> Account:
+        """get the account by it's internal id"""
+        collection: AsyncIOMotorCollection = self._tracked_accounts_collection
+        account_data: Document = await collection.find_one({"internal_id": account_internal_id})
+        del account_data["_id"]
+        return Account(**account_data)
+
     async def add_meterings(self, meterings: tp.List[Metering]) -> None:
         """add the provided metering into the database"""
         collection: AsyncIOMotorCollection = self._meterings_collection

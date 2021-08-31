@@ -2,12 +2,14 @@ import typing as tp
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from loguru import logger
 
 from _logging import CONSOLE_LOGGING_CONFIG, FILE_LOGGING_CONFIG
 from mastodon_meter.Account import Account
 from mastodon_meter.Gatherer import Gatherer
 from mastodon_meter.Metering import Metering
+from mastodon_meter.Plotting import Plotter
 from mastodon_meter.Types import ResponsePayload
 from mastodon_meter.database import MongoDbWrapper
 from mastodon_meter.models import (
@@ -165,18 +167,57 @@ async def gather_data() -> ResponsePayload:
 
 
 @app.get("/api/{account_internal_id}/graph/subscribers")
-def get_subscribers_graph(account_internal_id: str, time_boundaries: GraphRequest) -> ResponsePayload:
+async def get_subscribers_graph(
+    account_internal_id: str, time_boundaries: GraphRequest
+) -> tp.Union[ResponsePayload, FileResponse]:
     """get subscribers graph for an account"""
-    raise NotImplementedError
+    logger.info(f"Plotting subscribers for account {account_internal_id}")
+
+    try:
+        account: Account = await MongoDbWrapper().get_account_by_internal_id(account_internal_id)
+        meterings: tp.List[Metering] = await MongoDbWrapper().get_all_meterings(account_internal_id)
+        plot_path: str = Plotter().draw_subscribers_plot(meterings, account)
+        return FileResponse(plot_path)
+
+    except Exception as e:
+        message: str = f"An error occurred while generating plot: {e}"
+        logger.error(message)
+        return {"status": False, "message": message}
 
 
 @app.get("/api/{account_internal_id}/graph/toots")
-def get_toots_graph(account_internal_id: str, time_boundaries: GraphRequest) -> ResponsePayload:
+async def get_toots_graph(
+    account_internal_id: str, time_boundaries: GraphRequest
+) -> tp.Union[ResponsePayload, FileResponse]:
     """get toots graph for an account"""
-    raise NotImplementedError
+    logger.info(f"Plotting statuses for account {account_internal_id}")
+
+    try:
+        account: Account = await MongoDbWrapper().get_account_by_internal_id(account_internal_id)
+        meterings: tp.List[Metering] = await MongoDbWrapper().get_all_meterings(account_internal_id)
+        plot_path: str = Plotter().draw_statuses_plot(meterings, account)
+        return FileResponse(plot_path)
+
+    except Exception as e:
+        message: str = f"An error occurred while generating plot: {e}"
+        logger.error(message)
+        return {"status": False, "message": message}
 
 
 @app.get("/api/{account_internal_id}/graph/common")
-def get_common_graph(account_internal_id: str, time_boundaries: GraphRequest) -> ResponsePayload:
+async def get_common_graph(
+    account_internal_id: str, time_boundaries: GraphRequest
+) -> tp.Union[ResponsePayload, FileResponse]:
     """get common (toots and subscribers) graph for an account"""
-    raise NotImplementedError
+    logger.info(f"Plotting statuses and subscribers for account {account_internal_id}")
+
+    try:
+        account: Account = await MongoDbWrapper().get_account_by_internal_id(account_internal_id)
+        meterings: tp.List[Metering] = await MongoDbWrapper().get_all_meterings(account_internal_id)
+        plot_path: str = Plotter().draw_common_plot(meterings, account)
+        return FileResponse(plot_path)
+
+    except Exception as e:
+        message: str = f"An error occurred while generating plot: {e}"
+        logger.error(message)
+        return {"status": False, "message": message}
