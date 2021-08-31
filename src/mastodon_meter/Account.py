@@ -20,4 +20,5 @@ class Account:
 
     @property
     def full_address(self) -> str:
-        return f"{self.username}@{self.instance}"
+        instance: str = self.instance.split("//")[-1]
+        return f"{self.username}@{instance}"
