@@ -1,8 +1,6 @@
 import asyncio
-import os
 import typing as tp
 
-import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
@@ -27,9 +25,9 @@ from mastodon_meter.models import (
 logger.configure(handlers=[CONSOLE_LOGGING_CONFIG, FILE_LOGGING_CONFIG])
 
 # global variables
-api = FastAPI()
+app = FastAPI()
 
-api.add_middleware(
+app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
@@ -38,8 +36,8 @@ api.add_middleware(
 )
 
 
-@api.post("/api/accounts/add", response_model=tp.Union[AddAccountResponse, ResponseBase])  # type: ignore
-def add_tracked_account(account_data: AddAccountRequest) -> ResponsePayload:
+@app.post("/api/accounts/add", response_model=tp.Union[AddAccountResponse, ResponseBase])  # type: ignore
+async def add_tracked_account(account_data: AddAccountRequest) -> ResponsePayload:
     """add an account to the list of tracked"""
     logger.info("Adding account into the list of tracked")
 
@@ -49,7 +47,7 @@ def add_tracked_account(account_data: AddAccountRequest) -> ResponsePayload:
             instance=account_data.instance,
             id=account_data.instance_id,
         )
-        MongoDbWrapper().add_tracked_account(account)
+        await MongoDbWrapper().add_tracked_account(account)
 
         message: str = f"Added account {account.internal_id} to the list of tracked"
         logger.info(message)
@@ -67,21 +65,21 @@ def add_tracked_account(account_data: AddAccountRequest) -> ResponsePayload:
         return {"status": False, "message": message}
 
 
-@api.post("/api/accounts/remove", response_model=ResponseBase)
-def remove_tracked_account(account_data: DeleteAccountRequest) -> ResponsePayload:
+@app.post("/api/accounts/remove", response_model=ResponseBase)
+async def remove_tracked_account(account_data: DeleteAccountRequest) -> ResponsePayload:
     """remove an account from the list of tracked"""
     logger.info(f"Deleting account {account_data.account_internal_id} from the list of tracked")
 
     try:
-        MongoDbWrapper().delete_tracked_account(account_data.account_internal_id)
+        await MongoDbWrapper().delete_tracked_account(account_data.account_internal_id)
         message: str = f"Removed account {account_data.account_internal_id} from the list of tracked"
         logger.info(message)
 
         if account_data.remove_associated_data:
             logger.info(f"Removing meterings associated with account {account_data.account_internal_id}")
-            meterings: tp.List[Metering] = MongoDbWrapper().get_all_meterings(account_data.account_internal_id)
+            meterings: tp.List[Metering] = await MongoDbWrapper().get_all_meterings(account_data.account_internal_id)
             metering_ids: tp.Set[str] = {m.internal_id for m in meterings}
-            MongoDbWrapper().delete_meterings(metering_ids)
+            await MongoDbWrapper().delete_meterings(metering_ids)
             logger.info(f"Removed all meterings associated with account {account_data.account_internal_id}")
 
         response: ResponsePayload = {
@@ -96,13 +94,13 @@ def remove_tracked_account(account_data: DeleteAccountRequest) -> ResponsePayloa
         return {"status": False, "message": message}
 
 
-@api.get("/api/accounts/tracked", response_model=TrackedAccountList)
-def get_tracked_accounts() -> ResponsePayload:
+@app.get("/api/accounts/tracked", response_model=TrackedAccountList)
+async def get_tracked_accounts() -> ResponsePayload:
     """return the list of tracked accounts"""
     logger.info("Gathering tracked accounts")
 
     try:
-        tracked_accounts: tp.List[Account] = MongoDbWrapper().get_tracked_accounts()
+        tracked_accounts: tp.List[Account] = await MongoDbWrapper().get_tracked_accounts()
         response: ResponsePayload = {
             "status": True,
             "message": f"Gathered {len(tracked_accounts)} tracked accounts.",
@@ -125,13 +123,13 @@ def get_tracked_accounts() -> ResponsePayload:
         return {"status": False, "message": message}
 
 
-@api.get("/api/{account_internal_id}/data", response_model=AccountRawData)
-def get_account_data(account_internal_id: str) -> ResponsePayload:
+@app.get("/api/{account_internal_id}/data", response_model=AccountRawData)
+async def get_account_data(account_internal_id: str) -> ResponsePayload:
     """get raw data for an account"""
     logger.info(f"Gathering raw data for account {account_internal_id}")
 
     try:
-        meterings: tp.List[Metering] = MongoDbWrapper().get_all_meterings(account_internal_id)
+        meterings: tp.List[Metering] = await MongoDbWrapper().get_all_meterings(account_internal_id)
         response: ResponsePayload = {
             "status": True,
             "message": f"Gathered raw data for account {account_internal_id}",
@@ -154,19 +152,19 @@ def get_account_data(account_internal_id: str) -> ResponsePayload:
         return {"status": False, "message": message}
 
 
-@api.get("/api/{account_internal_id}/graph/subscribers")
+@app.get("/api/{account_internal_id}/graph/subscribers")
 def get_subscribers_graph(account_internal_id: str, time_boundaries: GraphRequest) -> ResponsePayload:
     """get subscribers graph for an account"""
     raise NotImplementedError
 
 
-@api.get("/api/{account_internal_id}/graph/toots")
+@app.get("/api/{account_internal_id}/graph/toots")
 def get_toots_graph(account_internal_id: str, time_boundaries: GraphRequest) -> ResponsePayload:
     """get toots graph for an account"""
     raise NotImplementedError
 
 
-@api.get("/api/{account_internal_id}/graph/common")
+@app.get("/api/{account_internal_id}/graph/common")
 def get_common_graph(account_internal_id: str, time_boundaries: GraphRequest) -> ResponsePayload:
     """get common (toots and subscribers) graph for an account"""
     raise NotImplementedError
@@ -175,9 +173,3 @@ def get_common_graph(account_internal_id: str, time_boundaries: GraphRequest) ->
 if __name__ == "__main__":
     # gather meterings
     asyncio.run(Gatherer().gather_meterings())
-
-    # start the server
-    host: str = os.getenv("SERVER_HOST", default="0.0.0.0")
-    port: int = int(os.getenv("SERVER_PORT", default=8080))
-    logger.info(f"Server started at {host}:{port}")
-    uvicorn.run("app:api", host=host, port=port)
