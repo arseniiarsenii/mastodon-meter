@@ -15,9 +15,6 @@ from .Metering import Metering
 class Plotter:
     """handles drawing plots from the provided meterings"""
 
-    def __init__(self) -> None:
-        pass
-
     @staticmethod
     def _draw_generic_plot(
         data: tp.Tuple[tp.List[str], tp.List[int]], filename: str, title: str, x_label: str, y_label: str
@@ -78,7 +75,7 @@ class Plotter:
             w2, h2 = image_2.size
             resulting_image: Image = Image.new("RGB", (w1 + w2, max((h1, h2))))
             resulting_image.paste(image_1, (0, 0))
-            resulting_image.paste(image_2, (w2, 0))
+            resulting_image.paste(image_2, (w1, 0))
             return resulting_image
 
         result: Image = reduce(_unite_two_images, images)
