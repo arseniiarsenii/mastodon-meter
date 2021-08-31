@@ -15,23 +15,30 @@ class Gatherer(metaclass=SingletonMeta):
     """Gathers data for all the tracked accounts and stores it in the database"""
 
     def __init__(self) -> None:
-        self.db_wrapper: MongoDbWrapper = MongoDbWrapper()
+        self._db_wrapper: MongoDbWrapper = MongoDbWrapper()
 
-    async def gather_meterings(self) -> None:
+    async def gather_meterings(self) -> tp.Tuple[int, float]:
         """do meterings for all the tracked accounts asynchronously"""
         t0: float = time()
-        tracked_accounts: tp.List[Account] = self.db_wrapper.get_tracked_accounts()
+        tracked_accounts: tp.List[Account] = await self._db_wrapper.get_tracked_accounts()
+        meterings: tp.List[Metering] = []
         logger.info(f"Gathering meterings for {len(tracked_accounts)} accounts")
+
         async with httpx.AsyncClient() as client:
-            responses: tp.List[httpx.Response] = [await client.get(acc.account_data_link) for acc in tracked_accounts]
-        response_payloads: tp.List[ResponsePayload] = [response.json() for response in responses]
-        meterings: tp.List[Metering] = [
-            Metering(
-                toot_count=response["statuses_count"],
-                subscribers_count=response["followers_count"],
-                parent_account_internal_id=account.internal_id,
-            )
-            for response, account in zip(response_payloads, tracked_accounts)
-        ]
-        self.db_wrapper.add_meterings(meterings)
-        logger.info(f"Gathered {len(meterings)} meterings for in {round(time()-t0, 3)} seconds.")
+            for account in tracked_accounts:
+                response: httpx.Response = await client.get(account.account_data_link)
+                response_payload: ResponsePayload = response.json()
+                meterings.append(
+                    Metering(
+                        toot_count=response_payload["statuses_count"],
+                        subscribers_count=response_payload["followers_count"],
+                        parent_account_internal_id=account.internal_id,
+                    )
+                )
+
+        await self._db_wrapper.add_meterings(meterings)
+
+        metering_count: int = len(meterings)
+        execution_time: float = round(time() - t0, 3)
+        logger.info(f"Gathered {metering_count} meterings in {execution_time} seconds.")
+        return metering_count, execution_time
