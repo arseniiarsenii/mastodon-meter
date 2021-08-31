@@ -151,6 +151,19 @@ async def get_account_data(account_internal_id: str) -> ResponsePayload:
         return {"status": False, "message": message}
 
 
+@app.get("/api/gather-data", response_model=ResponseBase)
+async def gather_data() -> ResponsePayload:
+    """get meterings for all the tracked accounts and save them to the DB"""
+    try:
+        await Gatherer().gather_meterings()
+        return {"status": True, "message": f"Gathered meterings for all the tracked accounts."}
+
+    except Exception as e:
+        message: str = f"An error occurred while setting up gathering task: {e}"
+        logger.error(message)
+        return {"status": False, "message": message}
+
+
 @app.get("/api/{account_internal_id}/graph/subscribers")
 def get_subscribers_graph(account_internal_id: str, time_boundaries: GraphRequest) -> ResponsePayload:
     """get subscribers graph for an account"""
@@ -167,8 +180,3 @@ def get_toots_graph(account_internal_id: str, time_boundaries: GraphRequest) -> 
 def get_common_graph(account_internal_id: str, time_boundaries: GraphRequest) -> ResponsePayload:
     """get common (toots and subscribers) graph for an account"""
     raise NotImplementedError
-
-
-if __name__ == "__main__":
-    # gather meterings
-    asyncio.run(Gatherer().gather_meterings())

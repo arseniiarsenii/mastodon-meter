@@ -101,6 +101,26 @@ Error:
 }
 ```
 
+### Собрать данные для всех отслеживаемых аккаунтов и записать в БД
+**GET** запрос на `/api/gather-data`
+
+#### RESPONSE PAYLOAD
+Success:
+```json
+{
+  "status":  true,
+  "message": "Description for the operation result"
+}
+```
+
+Error:
+```json
+{
+  "status":  false,
+  "message": "Description for the operation result"
+}
+```
+
 ## Операции с аккаунтами из списка отслеживаемых
 
 ### Получить сырые данные за определенный период
