@@ -1,4 +1,5 @@
 import typing as tp
+from datetime import datetime
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -168,6 +169,26 @@ async def gather_data() -> ResponsePayload:
         return {"status": False, "message": message}
 
 
+def filter_metering_by_time(
+    meterings: tp.List[Metering], since: tp.Optional[str], to: tp.Optional[str]
+) -> tp.List[Metering]:
+    """filter meterings to only leave ones that are within the time boundaries"""
+    date_format: str = "%Y-%m-%d %H:%M"
+    since_: tp.Optional[datetime] = datetime.strptime(since, date_format) if since else None
+    to_: tp.Optional[datetime] = datetime.strptime(to, date_format) if to else None
+    return list(filter(lambda m: m.is_within_range(since_, to_), meterings))
+
+
+async def get_plot_data(
+    account_internal_id: str, time_boundaries: GraphRequest
+) -> tp.Tuple[Account, tp.List[Metering]]:
+    """gather data for drawing the plot"""
+    account: Account = await MongoDbWrapper().get_account_by_internal_id(account_internal_id)
+    meterings: tp.List[Metering] = await MongoDbWrapper().get_all_meterings(account_internal_id)
+    meterings = filter_metering_by_time(meterings, time_boundaries.since, time_boundaries.to)
+    return account, meterings
+
+
 @app.get("/api/{account_internal_id}/graph/subscribers")
 async def get_subscribers_graph(
     account_internal_id: str, time_boundaries: GraphRequest
@@ -176,8 +197,7 @@ async def get_subscribers_graph(
     logger.info(f"Plotting subscribers for account {account_internal_id}")
 
     try:
-        account: Account = await MongoDbWrapper().get_account_by_internal_id(account_internal_id)
-        meterings: tp.List[Metering] = await MongoDbWrapper().get_all_meterings(account_internal_id)
+        account, meterings = await get_plot_data(account_internal_id, time_boundaries)
         plot_path: str = Plotter().draw_subscribers_plot(meterings, account)
         return FileResponse(plot_path)
 
@@ -195,8 +215,7 @@ async def get_toots_graph(
     logger.info(f"Plotting statuses for account {account_internal_id}")
 
     try:
-        account: Account = await MongoDbWrapper().get_account_by_internal_id(account_internal_id)
-        meterings: tp.List[Metering] = await MongoDbWrapper().get_all_meterings(account_internal_id)
+        account, meterings = await get_plot_data(account_internal_id, time_boundaries)
         plot_path: str = Plotter().draw_statuses_plot(meterings, account)
         return FileResponse(plot_path)
 
@@ -214,8 +233,7 @@ async def get_common_graph(
     logger.info(f"Plotting statuses and subscribers for account {account_internal_id}")
 
     try:
-        account: Account = await MongoDbWrapper().get_account_by_internal_id(account_internal_id)
-        meterings: tp.List[Metering] = await MongoDbWrapper().get_all_meterings(account_internal_id)
+        account, meterings = await get_plot_data(account_internal_id, time_boundaries)
         plot_path: str = Plotter().draw_common_plot(meterings, account)
         return FileResponse(plot_path)
 
