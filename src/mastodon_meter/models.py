@@ -48,3 +48,15 @@ class GraphRequest(BaseModel):
 
     since: tp.Optional[str]
     to: tp.Optional[str]
+
+
+class GetReportRequest(BaseModel):
+    """a request to retrieve a simple text report"""
+
+    accounts: tp.Optional[tp.List[str]]
+
+
+class GetReportResponse(ResponseBase):
+    """a response holding a simple text report"""
+
+    report: str

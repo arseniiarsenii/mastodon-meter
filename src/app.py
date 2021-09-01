@@ -19,6 +19,8 @@ from mastodon_meter.models import (
     AddAccountRequest,
     AddAccountResponse,
     DeleteAccountRequest,
+    GetReportRequest,
+    GetReportResponse,
     GraphRequest,
     ResponseBase,
     TrackedAccountList,
@@ -243,20 +245,25 @@ async def get_common_graph(
         return {"status": False, "message": message}
 
 
-@app.get("/api/report")
-async def get_text_report() -> str:
+@app.get("/api/report", response_model=tp.Union[GetReportResponse, ResponseBase])  # type: ignore
+async def get_text_report(payload_data: GetReportRequest) -> ResponsePayload:
     """get a simple text report for all the tracked accounts"""
     logger.info("Generating a simple text report for all the tracked accounts")
 
     try:
         accounts: tp.List[Account] = await MongoDbWrapper().get_tracked_accounts()
+        if payload_data.accounts is not None:
+            target_accounts: tp.List[str] = payload_data.accounts
+            accounts = list(filter(lambda a: a.internal_id in target_accounts, accounts))
+
         account_data: tp.List[tp.Tuple[Account, tp.List[Metering]]] = [
             (acc, await MongoDbWrapper().get_all_meterings(acc.internal_id)) for acc in accounts
         ]
+
         report: str = Reporter().get_simple_text_report(account_data)
-        return report
+        return {"status": True, "message": "Generated a simple text report for requested accounts", "report": report}
 
     except Exception as e:
         message: str = f"An error occurred while generating plot: {e}"
         logger.error(message)
-        return message
+        return {"status": False, "message": message}
