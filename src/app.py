@@ -1,3 +1,4 @@
+import asyncio
 import typing as tp
 from datetime import datetime
 
@@ -39,6 +40,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+async def startup_event() -> None:
+    """tasks to do at server startup"""
+    MongoDbWrapper()
+    asyncio.create_task(Gatherer().start_metering_daemon())
 
 
 @app.post("/api/accounts/add", response_model=tp.Union[AddAccountResponse, ResponseBase])  # type: ignore
