@@ -5,7 +5,7 @@ description = "Backend for the Mastodon meter - a simple Mastodon stats and anal
 authors = ["arseniiarsenii <arseniivelichko2@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.8"
 loguru = "^0.5.3"
 fastapi = "^0.68.1"
 uvicorn = "^0.15.0"

@@ -10,7 +10,7 @@ class ResponseBase(BaseModel):
     message: str
 
 
-class AddAccountRequest:
+class AddAccountRequest(BaseModel):
     """a request to add account to the list of tracked"""
 
     username: str
