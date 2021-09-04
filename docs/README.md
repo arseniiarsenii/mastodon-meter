@@ -1,3 +1,5 @@
+[**This page is also available in english**](/docs/README_EN.md)
+
 # Mastodon meter
 
 Mastodon meter - это открытая система аналитики для федеративной [социальной сети Mastodon](https://joinmastodon.org).
