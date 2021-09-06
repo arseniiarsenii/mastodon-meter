@@ -234,7 +234,7 @@ async def get_text_report(payload_data: GetReportRequest) -> ResponsePayload:
     try:
         accounts: tp.List[Account] = await MongoDbWrapper().get_tracked_accounts()
         if payload_data.accounts is not None:
-            target_accounts: tp.List[str] = payload_data.accounts
+            target_accounts: tp.Set[str] = set(payload_data.accounts)
             accounts = list(filter(lambda a: a.internal_id in target_accounts, accounts))
 
         account_data: tp.List[tp.Tuple[Account, tp.List[Metering]]] = [
